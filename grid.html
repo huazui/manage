@@ -1,0 +1,318 @@
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html" ; charset="utf-8" />
+    <title>Grid</title>
+    <link rel="stylesheet" href="ext-3.3.0/resources/css/ext-all.css">
+    <script type="text/javascript" src="ext-3.3.0/adapter/ext/ext-base.js"></script>
+    <script type="text/javascript" src="ext-3.3.0/ext-all.js"></script>
+    <script type="text/javascript" src="ext-3.3.0/examples/ux/PagingMemoryProxy.js"></script>
+    <script>
+        Ext.onReady(function () {
+            const gridRow = Ext.data.Record.create([
+                { name: 'id', type: 'string' },
+                { name: 'name', type: 'string' },
+                { name: 'className', type: 'string' },
+                { name: 'sex', type: 'string' },
+                { name: 'birthday', type: 'string' },
+                { name: 'avatar', type: 'string' },
+            ]);
+
+            var win = new Ext.Window({
+                title: '请输入个人信息',
+                width: 250,
+                closeAction: 'hide',
+                items: new Ext.form.FormPanel({
+                defaultType: 'textfield',
+                labelWidth: 60,
+                frame: true,
+                items: [{
+                id: 'name',
+                fieldLabel: 'name',
+                }, {
+                id: 'aclass',
+                fieldLabel: 'aclass',
+                },{
+                id: 'sex',
+                fieldLabel: 'sex',
+                },{
+                id: 'age',
+                fieldLabel: 'age',
+                },{
+                id: 'birthday',
+                fieldLabel: 'birthday',
+                }],
+                buttons: [{
+                text: 'confirm',
+                handler: function(){
+                    var newRecord = new gridRow({
+                    name: '',
+                    theClass: '',
+                    sex: '',
+                    age: '',
+                    birthday: '',
+                    avatar: ''
+                });
+                newRecord.data.name = Ext.getCmp('name').getValue();
+                newRecord.data.theClass = Ext.getCmp('aclass').getValue();
+                newRecord.data.sex = Ext.getCmp('sex').getValue();
+                newRecord.data.age = Ext.getCmp('age').getValue();
+                newRecord.data.birthday = Ext.getCmp('birthday').getValue();
+                newRecord.data.avatar = Ext.getCmp('sex').getValue();
+                let record = grid.getSelectionModel().getSelected();
+                let index = grid.store.indexOf(record);
+                if (index != -1) {
+                    grid.stopEditing();
+                    // newRecord.data.className = record.data.className;
+                    grid.store.insert(index + 1, newRecord);
+                    grid.startEditing(0, 0);
+                } else {
+                    grid.stopEditing();
+                    grid.store.insert(0, newRecord);
+                    grid.startEditing(0, 0);
+                }
+                grid.view.refresh();
+                win.hide();
+                }
+                }
+                ]})
+                })
+            var pageSize = 5;
+            var selectionsIndex = [];
+
+           
+            function clickAddBtnInToolBar() {
+                win.show();
+       
+            }
+
+            function clickDeleteBtnInToolBar() {
+                if (checkboxModel.hasSelection()) {
+                    Ext.Msg.confirm('Check', 'Do you really want to delete this data?', function (text) {
+                        if (text === 'yes') {
+                            store.remove(checkboxModel.getSelections())
+                            grid.view.refresh();
+                        }
+                    })
+                } else {
+                    Ext.Msg.alert('Check', 'Please select a data to move!')
+                }
+            }
+
+            function clickUpMenu() {
+
+                if (checkboxModel.getSelections().length > 1 || !checkboxModel.hasSelection()) {
+                    Ext.Msg.alert('Check', 'Please select a data to move!')
+                } else {
+                    var moveRow = checkboxModel.getSelected()
+                    var index = store.indexOf(moveRow);
+                    if (index > 0) {
+                        grid.store.insert(index - 1, moveRow);
+                        grid.view.refresh();
+                    } else {
+                        Ext.Msg.alert('Check', 'This is already the first line of data!')
+                    }
+                }
+            }
+
+            function clickDownMenu() {
+                if (checkboxModel.getSelections().length > 1 || !checkboxModel.hasSelection()) {
+                    Ext.Msg.alert('Check', 'Please select a data to move!')
+                } else {
+                    var moveRow = checkboxModel.getSelected()
+                    var index = store.indexOf(moveRow);
+                    if (index < pageSize - 1) {
+                        grid.store.insert(index + 1, moveRow);
+                        
+                        grid.view.refresh();
+                    } else {
+                        Ext.Msg.alert('Check', 'This is already the last line of data!')
+                    }
+                }
+            }
+
+            function clickFirstMenu() {
+                if (checkboxModel.getSelections().length > 1 || !checkboxModel.hasSelection()) {
+                    Ext.Msg.alert('Check', 'Please select a data to move!')
+                } else {
+                    var moveRow = checkboxModel.getSelected()
+                    grid.store.insert(0, moveRow);
+                  
+                    grid.view.refresh();
+                    
+                }
+            }
+
+            function clickLastMenu() {
+                if (checkboxModel.getSelections().length > 1 || !checkboxModel.hasSelection()) {
+                    Ext.Msg.alert('Check', 'Please select a data to move!')
+                } else {
+                    var moveRow = checkboxModel.getSelected()
+                    grid.store.insert(pageSize - 1, moveRow);
+                    // grid.getView().refresh();
+                    grid.view.refresh();
+                }
+            }
+
+    
+            const checkboxModel = new Ext.grid.CheckboxSelectionModel({
+                listeners: {
+                    'rowselect': function (selectionModel, rowIndex, row) {
+                        selectionsIndex.push(rowIndex)
+                    },
+                    'rowdeselect': function (selectionModel, rowIndex, row) {
+                        selectionsIndex = selectionsIndex.filter(val => val !== rowIndex)
+                    }
+                }
+            });
+
+            const toolBar = new Ext.Toolbar({
+                items: [
+                    {
+                        text: 'Add',
+                        handler: function () {
+                            clickAddBtnInToolBar();
+                        }
+                    }, {
+                        text: 'Delete',
+                        handler: function () {
+                            clickDeleteBtnInToolBar();
+                        }
+                    }]
+            });
+
+            const contextMenu = new Ext.menu.Menu({
+                items: [{
+                    text: 'Up',
+                    handler: function () {
+                        clickUpMenu();
+                    }
+                }, {
+                    text: 'Down',
+                    handler: function () {
+                        clickDownMenu();
+                    }
+                }, {
+                    text: 'First',
+                    handler: function () {
+                        clickFirstMenu();
+                    }
+                }, {
+                    text: 'Last',
+                    handler: function () {
+                        clickLastMenu();
+                    }
+                }]
+            })
+
+            const contextDoc = Ext.getDoc();
+
+            Ext.get(contextDoc).on('contextmenu', e => {
+                e.preventDefault();
+                contextMenu.showAt(e.getXY());
+            });
+
+            const columnModel = new Ext.grid.ColumnModel([
+                new Ext.grid.RowNumberer(),
+                checkboxModel,
+                {
+                    header: 'name', dataIndex: 'name', editor: new Ext.grid.GridEditor(
+                        new Ext.form.TextField({
+                            allowBlank: false
+                        })
+                    )
+                }, {
+                    header: 'theClass', dataIndex: 'theClass', editor: new Ext.grid.GridEditor(
+                        new Ext.form.TextField({
+                            allowBlank: false
+                        })
+                    )
+                }, {
+                    header: 'sex', dataIndex: 'sex', editor: new Ext.grid.GridEditor(
+                        new Ext.form.TextField({
+                            allowBlank: false
+                        })
+                    )
+                }, {
+                    header: 'age', 
+                    dataIndex: 'age',
+                    editor: new Ext.grid.GridEditor(
+                        new Ext.form.TextField({
+                            allowBlank: false
+                        }))
+                }, {
+                    header: 'birthday', 
+                    dataIndex: 'birthday',
+                    renderer: Ext.util.Format.dateRenderer('Y-m-d'),
+                    editor: new Ext.grid.GridEditor(
+                        new Ext.form.DateField()
+                    )
+                }, {
+                    header: 'Avatar', dataIndex: 'avatar', renderer: function (val) {
+                        return (val === 'male') ? '<img src="img/male.png"/>' : '<img src="img/female.png"/>'
+                    }
+                }
+            ])
+            const data = [
+                ['Eric Chen', 'Class1', 'Male', '18','1996-10-25', 'male'],
+                [ 'Skye Lu', 'Class2', 'Female', '18','1996-10-16', 'female'],
+                [ 'Jaylon Liu', 'Class2', 'Male', '18','1979-01-08', 'male'],
+                [ 'Panda Wu', 'Class1', 'Male', '18','1998-07-15', 'male'],
+                [ 'Tiger Zhu', 'Class1', 'Male', '18','2000-03-15', 'male'],
+                [ 'Danny Zeng', 'Class1', 'Male','18', '1997-08-04', 'male'],
+                [ 'Amber Chen', 'Class3', 'Female', '18','2015-06-10', 'female'],
+                [ 'Andrew Li', 'Class3', 'Male','18', '2019-06-24', 'male'],
+                [ 'Joshua Luo', 'Class1', 'Male', '18','2019-08-20', 'male'],
+                [ 'Milo Zhang', 'Class1', 'Male', '18','1997-08-04', 'male'],
+                [ 'Emilio Weng', 'Class3', 'Male', '2015-06-10', 'male'],
+            ]
+
+            const store = new Ext.data.GroupingStore({
+                proxy: new Ext.data.PagingMemoryProxy(data),
+                reader: new Ext.data.ArrayReader({}, [
+                    { name: 'name' },
+                    { name: 'theClass' },
+                    { name: 'sex' },
+                    { name: 'age' },
+                    { name: 'birthday' },
+                    { name: 'avatar' }
+                ]),
+                groupField: 'theClass',
+                sortInfo: {
+                    field: 'name',
+                    direction: 'ASC'
+                }
+            });
+
+            store.load();
+            var pagingTb = new Ext.PagingToolbar({
+                pageSize: pageSize,
+                store: store,
+                displayInfo: true,
+                displayMsg: '显示第{0}到第{1}条，共{2}条',
+                emptyMsg: '没有记录'
+            });
+
+            var grid = new Ext.grid.EditorGridPanel({
+                renderTo: 'grid',
+                height: 500,
+                store: store,
+                cm: columnModel,
+                sm: checkboxModel,
+                tbar: toolBar,
+                bbar: pagingTb,
+                view: new Ext.grid.GroupingView(),
+            });
+
+
+
+            store.load({ params: { start: 0, limit: pageSize } })
+        })
+    </script>
+</head>
+
+<body>
+    <div id="grid" style="margin:100px;"></div>
+</body>
+
+</html>
